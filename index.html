@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Liên Đội Số</title>
+<meta name="description" content="Trợ lý cho Tổng phụ trách Đội: chấm thi đua, xếp hạng, chào cờ, Rung chuông vàng">
+<meta name="theme-color" content="#0B1F3A">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="stylesheet" href="fonts/fonts.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+<style>
+:root{--red:#C8102E;--red-d:#9B0C23;--navy:#0B1F3A;--gold:#F4B400;--ink:#111827;--mut:#6B7280;--bg:#F4F5F8;--line:#E5E7EB;--ok:#059669;--warn:#D97706}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Roboto",system-ui,sans-serif;-webkit-text-size-adjust:100%}
+h1,h2,h3,.os{font-family:"Oswald","Roboto",sans-serif;font-weight:600;letter-spacing:.2px}
+button,input,select,textarea{font:inherit;color:inherit}
+.bar{background:var(--navy);color:#fff;position:sticky;top:0;z-index:20}
+.bar-in{max-width:1240px;margin:0 auto;display:flex;align-items:center;gap:14px;padding:10px 18px;flex-wrap:wrap}
+.badge{width:44px;height:44px;border-radius:50%;background:var(--red);display:grid;place-items:center;color:var(--gold);font-size:24px;border:3px solid var(--gold)}
+.bar h1{margin:0;font-size:24px;text-transform:uppercase;letter-spacing:1px}
+.bar .sc{font-size:13px;color:#CBD5E1}
+.menu{display:flex;gap:2px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+.menu::-webkit-scrollbar{display:none}
+.mi{border:0;background:transparent;color:#CBD5E1;padding:12px 14px;font-weight:500;cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;font-size:15px}
+.mi.on{color:#fff;border-bottom-color:var(--red)}
+.strip{height:4px;background:linear-gradient(90deg,var(--red) 0 70%,var(--gold) 70%)}
+main{max-width:1240px;margin:0 auto;padding:18px 18px 90px}
+.pane{display:none}.pane.on{display:block}
+.card{background:#fff;border-radius:14px;border:1px solid var(--line);padding:18px;margin-bottom:16px}
+.card h3{margin:0 0 12px;font-size:20px;color:var(--navy);text-transform:uppercase}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{border:1px solid #D1D5DB;background:#fff;border-radius:10px;padding:9px 15px;font-weight:500;cursor:pointer;display:inline-flex;gap:6px;align-items:center;text-decoration:none;color:var(--ink)}
+.btn:hover{border-color:var(--navy)}
+.btn.pri{background:var(--red);border-color:var(--red);color:#fff}
+.btn.nav{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.big{padding:13px 20px;font-size:17px}
+.btn.ghost{border-color:transparent;background:transparent}
+.muted{color:var(--mut)}.small{font-size:13px}
+input[type=text],input[type=date],input[type=number],input[type=password],select,textarea{border:1px solid #D1D5DB;border-radius:10px;padding:9px 12px;background:#fff;width:100%}
+.lay{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.lay.w{grid-template-columns:380px 1fr}
+@media(max-width:960px){.lay,.lay.w{grid-template-columns:1fr}}
+.lay>*{min-width:0}
+@media(max-width:700px){.bar{position:static}.menu{margin-left:0;width:100%}main{padding:14px 12px 70px}}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;border-left:5px solid var(--red)}
+.kpi b{display:block;font-family:Oswald;font-size:30px;color:var(--navy)}
+.kpi span{color:var(--mut);font-size:13px}
+@media(max-width:700px){.kpis{grid-template-columns:1fr 1fr}}
+/* chấm điểm */
+.khoi{margin-bottom:10px}
+.khoi .kt{font-family:Oswald;font-size:14px;color:var(--mut);margin-bottom:4px;text-transform:uppercase}
+.cls{display:flex;flex-wrap:wrap;gap:6px}
+.cb{border:1px solid #D1D5DB;background:#fff;border-radius:10px;padding:8px 0;width:62px;font-weight:700;cursor:pointer;position:relative}
+.cb.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.cb .n{position:absolute;top:-7px;right:-6px;background:var(--red);color:#fff;border-radius:999px;font-size:11px;padding:1px 6px}
+.crit{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.crit .nm{font-weight:500}.crit .pt{font-size:12px;font-weight:700}
+.crit .pt.m{color:var(--red)}.crit .pt.p{color:var(--ok)}
+.step{display:flex;align-items:center;gap:6px}
+.step button{width:40px;height:40px;border-radius:10px;border:1px solid #D1D5DB;background:#fff;font-size:20px;font-weight:700;cursor:pointer}
+.step .v{min-width:28px;text-align:center;font-family:Oswald;font-size:22px}
+.step .v.has{color:var(--red)}
+.log{display:grid;grid-template-columns:70px 1fr auto auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+.log .p{font-weight:700}.log .p.m{color:var(--red)}.log .p.p{color:var(--ok)}
+/* xếp hạng */
+.seg{display:inline-flex;background:#EEF0F4;border-radius:10px;padding:3px}
+.seg button{border:0;background:transparent;padding:7px 12px;border-radius:8px;cursor:pointer;font-weight:500}
+.seg button.on{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.12);color:var(--red)}
+.board{background:#fff;border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+.board .bh{background:var(--red);color:#fff;padding:16px 20px;display:flex;align-items:center;gap:14px}
+.board .bh h2{margin:0;font-size:26px;text-transform:uppercase}
+.board .bh .s{color:#FDE68A;font-size:14px}
+.btab{width:100%;border-collapse:collapse}
+.btab th{background:#F9FAFB;font-family:Oswald;font-weight:500;text-transform:uppercase;font-size:13px;color:var(--mut);padding:9px 10px;text-align:left}
+.btab td{padding:9px 10px;border-top:1px solid var(--line);font-size:15px}
+.btab td.sc{font-family:Oswald;font-size:20px;color:var(--navy)}
+.btab tr.top td{background:#FFFBEB}
+.btab tr.low td{background:#FEF2F2}
+.rk{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#EEF0F4;font-weight:700;font-size:13px}
+.rk.g{background:var(--gold);color:#422006}
+.why{font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+.btab td{vertical-align:middle}
+.kgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:0}
+.kcol{border-right:1px solid var(--line);overflow:hidden;min-width:0}
+.kcol .btab{table-layout:fixed}.kcol .btab td{padding:8px 8px}
+.kcol .why{max-width:none}
+.kcol h4{margin:0;padding:10px 12px;background:var(--navy);color:#fff;font-family:Oswald;font-weight:500;text-transform:uppercase}
+.speech{white-space:pre-wrap;line-height:1.65;font-size:16px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:14px}
+/* rung chuông vàng */
+.rcv{background:radial-gradient(circle at 50% 0,#1E3A8A,#0B1F3A 70%);color:#fff;border-radius:20px;min-height:66vh;padding:24px;display:flex;flex-direction:column;position:relative}
+.rcv:fullscreen{border-radius:0}
+.rcv .qn{font-family:Oswald;color:var(--gold);font-size:22px;text-transform:uppercase}
+.rcv .qt{font-size:min(5vw,46px);font-weight:700;margin:18px 0;line-height:1.3}
+.rcv .ops{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.rcv .op{background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.25);border-radius:16px;padding:14px 18px;font-size:min(3.4vw,30px);display:flex;gap:12px;align-items:center}
+.rcv .op b{width:44px;height:44px;border-radius:50%;background:var(--gold);color:var(--navy);display:grid;place-items:center;flex:none;font-family:Oswald}
+.rcv .op.right{background:#059669;border-color:#34D399}
+.rcv .clock{position:absolute;top:18px;right:24px;font-family:Oswald;font-size:48px;color:var(--gold)}
+.rcv .ctl{margin-top:auto;padding-top:18px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+@media(max-width:700px){.rcv .ops{grid-template-columns:1fr}.rcv .op{font-size:18px}.rcv .qt{font-size:24px}}
+.qi{display:grid;grid-template-columns:1fr auto;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.qi .a{color:var(--ok);font-weight:500}
+.month{display:grid;grid-template-columns:80px 1fr;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.month .m{font-family:Oswald;font-size:22px;color:var(--red);text-transform:uppercase}
+.month .t{font-weight:700;color:var(--navy)}
+.month.now{background:#FFFBEB;border-radius:10px;padding:12px}
+.ai-wait{padding:12px;font-weight:500;color:var(--red)}
+.spin{display:inline-block;width:16px;height:16px;border:3px solid #FECACA;border-top-color:var(--red);border-radius:50%;animation:sp 1s linear infinite;vertical-align:-3px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.ai-manual{background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:14px;margin-top:10px}
+.out{white-space:pre-wrap;line-height:1.6;background:#F9FAFB;border:1px solid var(--line);border-radius:12px;padding:14px;max-height:520px;overflow:auto}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(80px);background:var(--navy);color:#fff;padding:12px 18px;border-radius:12px;font-weight:500;transition:.3s;z-index:99;opacity:0}
+#toast.show{transform:translateX(-50%);opacity:1}
+.hint{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;padding:10px 14px;font-size:14px}
+</style>
+</head>
+<body>
+<header class="bar">
+ <div class="bar-in">
+  <div class="badge">★</div>
+  <div><h1>Liên Đội Số</h1><div class="sc" id="schoolLine">Trợ lý của Tổng phụ trách Đội</div></div>
+  <nav class="menu" id="menu">
+   <button class="mi on" data-t="tong">Tổng quan</button>
+   <button class="mi" data-t="cham">Chấm thi đua</button>
+   <button class="mi" data-t="hang">Xếp hạng</button>
+   <button class="mi" data-t="co">Chào cờ & AI</button>
+   <button class="mi" data-t="rcv">Rung chuông vàng</button>
+   <button class="mi" data-t="cai">Cài đặt</button>
+  </nav>
+ </div>
+ <div class="strip"></div>
+</header>
+<main>
+<!-- TỔNG QUAN -->
+<section class="pane on" id="p-tong">
+ <div class="kpis" id="kpis"></div>
+ <div class="lay">
+  <div class="card"><h3>Tuần này – dẫn đầu từng khối</h3><div id="leaders"></div></div>
+  <div class="card"><h3>Lỗi gặp nhiều nhất tuần</h3><div id="topErr"></div></div>
+ </div>
+ <div class="card"><h3>Chủ điểm tháng</h3><div id="monthNow"></div></div>
+</section>
+<!-- CHẤM -->
+<section class="pane" id="p-cham">
+ <div class="lay w">
+  <div>
+   <div class="card">
+    <h3>1. Ngày và người chấm</h3>
+    <div class="row"><input type="date" id="cDate" style="flex:1"><input type="text" id="cBy" placeholder="Tên Sao đỏ (không bắt buộc)" style="flex:1.4"></div>
+   </div>
+   <div class="card"><h3>2. Chọn lớp</h3><div id="clsPick"></div></div>
+  </div>
+  <div>
+   <div class="card">
+    <div class="row"><h3 style="margin:0">3. Chấm lớp <span id="curCls" style="color:var(--red)">…</span></h3><span style="flex:1"></span><span class="muted small" id="curScore"></span></div>
+    <p class="small muted">Bấm + mỗi lần thấy một lỗi (ví dụ 2 bạn đi muộn thì bấm 2 lần). Tự lưu ngay.</p>
+    <div id="crits"></div>
+    <input type="text" id="cNote" placeholder="Ghi chú thêm (không bắt buộc)" style="margin-top:10px">
+   </div>
+   <div class="card">
+    <h3>Đã ghi trong ngày</h3>
+    <div id="dayLog" class="small"></div>
+    <div class="row" style="margin-top:12px">
+     <button class="btn nav" id="send">📤 Gửi phiếu cho Tổng phụ trách</button>
+     <button class="btn" id="recvBtn">📥 Nhận phiếu Sao đỏ</button>
+    </div>
+    <div id="recvBox" hidden style="margin-top:10px">
+     <textarea id="recvIn" rows="4" placeholder="Dán các mã phiếu Sao đỏ gửi qua Zalo vào đây (dán được nhiều mã cùng lúc)"></textarea>
+     <div class="row" style="margin-top:8px"><button class="btn pri" id="recvGo">Gộp phiếu</button></div>
+    </div>
+    <p class="small muted">Nhiều bạn Sao đỏ chấm trên nhiều điện thoại: mỗi bạn bấm “Gửi phiếu” để có một mã ngắn, gửi qua Zalo. Tổng phụ trách dán mã vào “Nhận phiếu”, phiếu được gộp, không bị trùng.</p>
+   </div>
+  </div>
+ </div>
+</section>
+<!-- XẾP HẠNG -->
+<section class="pane" id="p-hang">
+ <div class="card">
+  <div class="row">
+   <button class="btn" id="wPrev">◀</button><b id="wLabel" class="os" style="font-size:18px"></b><button class="btn" id="wNext">▶</button>
+   <div class="seg" id="viewSeg"><button data-v="khoi" class="on">Theo khối</button><button data-v="truong">Toàn trường</button><button data-v="thang">Cả tháng</button></div>
+   <span style="flex:1"></span>
+   <button class="btn" id="bImg">🖼️ Xuất ảnh bảng</button><button class="btn" id="bXls">📊 Excel</button>
+  </div>
+ </div>
+ <div class="board" id="board"></div>
+ <div class="card" style="margin-top:16px">
+  <div class="row"><h3 style="margin:0">Lời đọc buổi chào cờ</h3><span style="flex:1"></span><button class="btn" id="spCopy">📋 Sao chép</button></div>
+  <p class="small muted">Web tự viết từ bảng điểm. Cô đọc lại, sửa nếu cần.</p>
+  <div class="speech" id="speech"></div>
+ </div>
+</section>
+<!-- CHÀO CỜ & AI -->
+<section class="pane" id="p-co">
+ <div class="lay w">
+  <div class="card">
+   <h3>Soạn bằng AI</h3>
+   <label class="small muted">Việc cần soạn</label>
+   <select id="aKind">
+    <option value="kb">Kịch bản sinh hoạt dưới cờ</option>
+    <option value="kh">Kế hoạch tổ chức ngày lễ</option>
+    <option value="tp">Bài phát thanh măng non</option>
+    <option value="tb">Thông báo gửi giáo viên chủ nhiệm</option>
+   </select>
+   <label class="small muted" style="display:block;margin-top:10px">Chủ điểm / ngày lễ</label>
+   <input type="text" id="aTopic">
+   <label class="small muted" style="display:block;margin-top:10px">Yêu cầu thêm (không bắt buộc)</label>
+   <textarea id="aMore" rows="3" placeholder="Ví dụ: có tiết mục văn nghệ của khối 4, thời lượng 20 phút"></textarea>
+   <div class="row" style="margin-top:12px"><button class="btn pri big" id="aGo">✨ Soạn</button></div>
+   <div id="aiBox" hidden></div>
+   <p class="small muted">AI chỉ gợi ý bản nháp. Cô đọc, sửa cho đúng thực tế của trường rồi mới dùng. Không nhập họ tên học sinh vào yêu cầu.</p>
+  </div>
+  <div>
+   <div class="card"><div class="row"><h3 style="margin:0">Bản nháp</h3><span style="flex:1"></span><button class="btn" id="aCopy">📋 Sao chép</button></div><div class="out" id="aOut" style="margin-top:10px"><span class="muted">Chưa có bản nháp.</span></div></div>
+   <div class="card"><h3>Chủ điểm cả năm học</h3><div id="months"></div></div>
+  </div>
+ </div>
+</section>
+<!-- RUNG CHUÔNG VÀNG -->
+<section class="pane" id="p-rcv">
+ <div class="rcv" id="rcv"></div>
+ <div class="lay" style="margin-top:16px">
+  <div class="card">
+   <h3>Thêm câu hỏi bằng AI</h3>
+   <div class="row"><input type="text" id="qTopic" placeholder="Chủ đề, ví dụ: An toàn giao thông" style="flex:2"><select id="qKhoi" style="flex:1"><option value="1–2">Khối 1–2</option><option value="3" selected>Khối 3</option><option value="4–5">Khối 4–5</option></select></div>
+   <div class="row" style="margin-top:10px"><button class="btn pri" id="qGo">✨ Viết 5 câu hỏi</button></div>
+   <div id="qBox" hidden></div>
+   <div id="qNew"></div>
+   <p class="small muted">Câu hỏi AI viết cần được cô kiểm tra đáp án trước khi thêm vào ngân hàng.</p>
+  </div>
+  <div class="card"><h3>Ngân hàng câu hỏi (<span id="qN"></span>)</h3><div id="qList" style="max-height:420px;overflow:auto"></div></div>
+ </div>
+</section>
+<!-- CÀI ĐẶT -->
+<section class="pane" id="p-cai">
+ <div class="lay">
+  <div>
+   <div class="card">
+    <h3>Liên đội</h3>
+    <label class="small muted">Tên trường</label><input type="text" id="sSchool">
+    <label class="small muted" style="display:block;margin-top:8px">Tổng phụ trách Đội</label><input type="text" id="sTPT">
+    <label class="small muted" style="display:block;margin-top:8px">Điểm chuẩn mỗi tuần của một lớp</label><input type="number" id="sBase">
+    <label class="small muted" style="display:block;margin-top:8px">Ngày bắt đầu tuần học thứ nhất (để đánh số tuần)</label><input type="date" id="sStart">
+    <div class="row" style="margin-top:10px"><button class="btn pri" id="sSave">Lưu</button></div>
+   </div>
+   <div class="card">
+    <h3>Danh sách lớp (<span id="nCls"></span> lớp)</h3>
+    <p class="small muted">Mỗi dòng là một khối, các lớp cách nhau bằng dấu phẩy.</p>
+    <textarea id="sCls" rows="6"></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn pri" id="sClsSave">Lưu danh sách lớp</button></div>
+   </div>
+   <div class="card">
+    <h3>Mã AI Gemini</h3>
+    <ol class="small" style="padding-left:18px;margin:0 0 8px"><li>Mở <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>, đăng nhập Gmail của cô.</li><li>Bấm <b>Create API key</b>, sao chép mã, dán vào ô dưới.</li><li>Máy của các bạn Sao đỏ không cần mã AI.</li></ol>
+    <input type="password" id="sKey" placeholder="Dán mã AI vào đây">
+    <div class="row" style="margin-top:8px"><button class="btn pri" id="kSave">Lưu mã</button><button class="btn" id="kTest">Thử mã</button></div>
+   </div>
+  </div>
+  <div>
+   <div class="card">
+    <h3>Tiêu chí thi đua</h3>
+    <p class="small muted">Mỗi dòng: <code>tên tiêu chí | điểm</code>. Điểm âm là trừ, điểm dương là cộng. Sửa theo quy định của trường.</p>
+    <textarea id="sCrit" rows="14"></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn pri" id="sCritSave">Lưu tiêu chí</button></div>
+   </div>
+   <div class="card">
+    <h3>Sao lưu</h3>
+    <p class="small muted">Dữ liệu lưu trên máy này. Nên sao lưu cuối mỗi tuần.</p>
+    <div class="row"><button class="btn" id="bk">💾 Sao lưu</button><label class="btn">📂 Khôi phục<input type="file" id="rs" accept=".json" hidden></label><button class="btn ghost" id="wipe">Xóa dữ liệu chấm</button></div>
+   </div>
+  </div>
+ </div>
+</section>
+</main>
+<script>
+/* ===== tiện ích chung ===== */
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const rnd=n=>Math.floor(Math.random()*n),pick=a=>a[rnd(a.length)];
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a};
+const todayISO=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const fmtDate=iso=>{if(!iso)return"";const[y,m,d]=iso.split("-");return d+"/"+m+"/"+y};
+function toast(msg){let t=$("#toast");if(!t){t=document.createElement("div");t.id="toast";document.body.appendChild(t)}t.textContent=msg;t.className="show";clearTimeout(t._h);t._h=setTimeout(()=>t.className="",2400)}
+function copyText(text,msg){(navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject()).catch(()=>{const ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove()}).finally(()=>toast(msg||"Đã sao chép"))}
+function download(name,blob){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+function loadStore(key,def){try{const v=JSON.parse(localStorage.getItem(key));return v?Object.assign(structuredClone(def),v):structuredClone(def)}catch(e){return structuredClone(def)}}
+function saveStore(key,val){try{localStorage.setItem(key,JSON.stringify(val))}catch(e){toast("Không lưu được trên máy này")}}
+function backup(key,val,name){download(name+"-"+todayISO()+".json",new Blob([JSON.stringify(val)],{type:"application/json"}))}
+function restore(file,cb){const r=new FileReader();r.onload=()=>{try{cb(JSON.parse(r.result))}catch(e){toast("File không đúng")}};r.readAsText(file)}
+/* đọc danh sách tên từ Excel hoặc dán */
+function parseNames(text){return String(text).split(/\r?\n/).map(s=>s.replace(/^\s*\d+[\.\)\-\s]+/,"").split(/\t|,|;/).map(x=>x.trim()).filter(Boolean).sort((a,b)=>b.split(" ").length-a.split(" ").length)[0]||"").map(s=>s.trim()).filter(s=>s&&/[a-zà-ỹđ]/i.test(s)&&!/^(họ|stt|tên)/i.test(s))}
+function readExcelNames(file,cb){const r=new FileReader();r.onload=()=>{try{const wb=XLSX.read(r.result,{type:"array"});const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:""});
+  const out=[];rows.forEach(row=>{const cells=row.map(c=>String(c).trim()).filter(c=>c&&/[a-zà-ỹđ]/i.test(c)&&c.split(" ").length>=2&&c.length<40&&!/^(họ|tên|stt|lớp|trường|danh)/i.test(c));if(cells[0])out.push(cells[0])});cb(out)}catch(e){toast("Không đọc được file")}};r.readAsArrayBuffer(file)}
+/* ===== AI Gemini ===== */
+async function gemini(key,prompt,json){
+  key=(key||"").trim();let last;
+  for(const m of["gemini-2.5-flash","gemini-flash-latest","gemini-2.0-flash"]){let res;
+    try{res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+m+":generateContent",{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},
+      body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:Object.assign({temperature:.8},json?{responseMimeType:"application/json"}:{})})})}
+    catch(e){throw new Error("Không kết nối được tới AI. Kiểm tra mạng, hoặc dùng cách sao chép sang Gemini.")}
+    if(res.status===404){last=new Error("Không tìm thấy mô hình AI.");continue}
+    if(!res.ok){let msg="";try{msg=(await res.json()).error.message}catch(e){}
+      if(res.status===429)throw new Error("Hết lượt AI miễn phí trong lúc này. Chờ 1 phút rồi thử lại.");
+      if([400,401,403].includes(res.status))throw new Error("Mã AI chưa dùng được"+(msg?" (Google báo: "+msg+")":"")+". Kiểm tra lại mã trong Cài đặt, hoặc tạo mã mới ở aistudio.google.com.");
+      throw new Error("AI báo lỗi "+res.status+". "+msg)}
+    const d=await res.json();return((((d.candidates||[])[0]||{}).content||{}).parts||[]).map(p=>p.text||"").join("").trim()}
+  throw last||new Error("Không gọi được AI.")}
+function extractJSON(t){t=String(t||"").replace(/```json|```/gi,"").trim();const a=t.search(/[\[{]/);if(a<0)throw new Error("Câu trả lời không đúng dạng.");const close=t[a]==="{"?"}":"]";return JSON.parse(t.slice(a,t.lastIndexOf(close)+1))}
+/* có mã: gọi thẳng; không có mã: khung sao chép – dán */
+async function runAI({key,prompt,json,box,onResult}){
+  box.hidden=false;
+  if(!(key||"").trim())return manualAI(box,prompt,json,onResult,"Chưa có mã AI.");
+  box.innerHTML='<div class="ai-wait"><span class="spin"></span> AI đang viết…</div>';
+  try{const t=await gemini(key,prompt,json);box.hidden=true;box.innerHTML="";onResult(json?extractJSON(t):t)}
+  catch(e){manualAI(box,prompt,json,onResult,e.message)}}
+function manualAI(box,prompt,json,onResult,reason){
+  box.innerHTML=`<div class="ai-manual"><b>Dùng AI qua ứng dụng Gemini (miễn phí)</b>
+  <p class="muted small">${esc(reason)} Làm 3 bước: <b>1.</b> Bấm “Sao chép yêu cầu”. <b>2.</b> Mở Gemini, dán vào rồi gửi. <b>3.</b> Sao chép câu trả lời, dán vào ô dưới.</p>
+  <div class="row"><button class="btn pri" data-a="cp">Sao chép yêu cầu</button><a class="btn" href="https://gemini.google.com/app" target="_blank" rel="noopener">Mở Gemini</a></div>
+  <textarea rows="4" data-ans placeholder="Dán câu trả lời của Gemini vào đây"></textarea>
+  <div class="row"><button class="btn pri" data-a="use">Dùng câu trả lời này</button><button class="btn ghost" data-a="x">Đóng</button></div></div>`;
+  $("[data-a=cp]",box).onclick=()=>copyText(prompt,"Đã sao chép. Mở Gemini và dán vào.");
+  $("[data-a=x]",box).onclick=()=>{box.hidden=true};
+  $("[data-a=use]",box).onclick=()=>{const v=$("[data-ans]",box).value;try{onResult(json?extractJSON(v):v.trim());box.hidden=true}catch(e){toast("Chưa đọc được: hãy sao chép toàn bộ câu trả lời")}}}
+/* ảnh từ một khối HTML */
+async function saveImage(el,name){if(!window.html2canvas){toast("Đang tải công cụ, thử lại sau giây lát");return}
+  const c=await html2canvas(el,{scale:2,backgroundColor:"#ffffff",useCORS:true});c.toBlob(b=>download(name+".png",b))}
+if("serviceWorker" in navigator&&location.protocol==="https:"&&/github\.io$/.test(location.host)){navigator.serviceWorker.register("sw.js").catch(()=>{})}
+
+const KEY="lien-doi-so-v1";
+const CRIT0=`Đi học muộn | -2
+Không đeo khăn quàng đỏ / huy hiệu | -2
+Không mặc đúng đồng phục | -2
+Mất trật tự giờ truy bài | -5
+Xếp hàng chậm, lộn xộn | -5
+Lớp, hành lang chưa sạch | -5
+Tập thể dục giữa giờ chưa nghiêm túc | -5
+Vứt rác, bẻ cây, leo trèo | -5
+Nói tục, xô đẩy bạn | -10
+Lớp sạch đẹp | 5
+Truy bài tốt | 3
+Có việc tốt, nhặt được của rơi | 5
+Tham gia phong trào tích cực | 5`;
+const CLS0=["1A1, 1A2, 1A3, 1A4, 1A5, 1A6, 1A7, 1A8, 1A9, 1A10","2A1, 2A2, 2A3, 2A4, 2A5, 2A6, 2A7, 2A8, 2A9, 2A10","3A1, 3A2, 3A3, 3A4, 3A5, 3A6, 3A7, 3A8, 3A9, 3A10","4A1, 4A2, 4A3, 4A4, 4A5, 4A6, 4A7, 4A8, 4A9, 4A10","5A1, 5A2, 5A3, 5A4, 5A5, 5A6, 5A7, 5A8, 5A9"].join("\n");
+const MONTHS=[["9","Mái trường thân yêu","Khai giảng năm học mới; Tết Trung thu"],["10","Chăm ngoan, học giỏi","20/10 – Ngày Phụ nữ Việt Nam"],["11","Biết ơn thầy cô","20/11 – Ngày Nhà giáo Việt Nam"],["12","Uống nước nhớ nguồn","22/12 – Ngày thành lập Quân đội nhân dân Việt Nam"],["1","Mừng Đảng, mừng Xuân","Tết Nguyên đán; phong trào Kế hoạch nhỏ"],["2","Mừng Đảng, mừng Xuân","3/2 – Ngày thành lập Đảng Cộng sản Việt Nam"],["3","Tiến bước lên Đoàn","8/3 – Quốc tế Phụ nữ; 26/3 – Ngày thành lập Đoàn"],["4","Hòa bình và hữu nghị","30/4 – Ngày Giải phóng miền Nam, thống nhất đất nước"],["5","Bác Hồ kính yêu","15/5 – Ngày thành lập Đội; 19/5 – Ngày sinh Bác Hồ"]];
+const QB0=[
+["Đội Thiếu niên Tiền phong Hồ Chí Minh được thành lập vào ngày nào?",["15/5/1941","19/5/1941","26/3/1931","2/9/1945"],0],
+["Đội Thiếu niên Tiền phong Hồ Chí Minh được thành lập ở tỉnh nào?",["Cao Bằng","Tuyên Quang","Nghệ An","Hà Giang"],0],
+["Người đội trưởng đầu tiên của Đội là ai?",["Kim Đồng","Lê Văn Tám","Võ Thị Sáu","Lượm"],0],
+["Tên thật của anh Kim Đồng là gì?",["Nông Văn Dền","Lý Văn Tịch","Nông Văn Thàn","Lý Thị Nì"],0],
+["Bài hát chính thức của Đội (Đội ca) là bài nào?",["Cùng nhau ta đi lên","Nhanh bước nhanh nhi đồng","Em yêu trường em","Cả nhà thương nhau"],0],
+["Bài Đội ca do nhạc sĩ nào sáng tác?",["Phong Nhã","Văn Cao","Hoàng Vân","Phạm Tuyên"],0],
+["Khăn quàng đỏ có hình gì?",["Tam giác cân","Hình vuông","Hình chữ nhật","Hình tròn"],0],
+["Câu đáp lại khẩu hiệu Đội là gì?",["Sẵn sàng!","Chăm ngoan!","Có mặt!","Tiến lên!"],0],
+["Đội viên là thiếu nhi trong độ tuổi nào?",["Từ 9 đến 15 tuổi","Từ 6 đến 9 tuổi","Từ 5 đến 10 tuổi","Từ 15 đến 18 tuổi"],0],
+["Bác Hồ sinh ngày tháng năm nào?",["19/5/1890","15/5/1890","2/9/1890","19/5/1900"],0],
+["Quê nội của Bác Hồ ở tỉnh nào?",["Nghệ An","Hà Tĩnh","Thanh Hóa","Quảng Bình"],0],
+["Bác Hồ dạy thiếu niên, nhi đồng mấy điều?",["5 điều","3 điều","7 điều","10 điều"],0],
+["Điều thứ nhất trong Năm điều Bác Hồ dạy là gì?",["Yêu Tổ quốc, yêu đồng bào","Học tập tốt, lao động tốt","Giữ gìn vệ sinh thật tốt","Khiêm tốn, thật thà, dũng cảm"],0],
+["Bác Hồ ra đi tìm đường cứu nước từ bến cảng nào?",["Bến Nhà Rồng","Bến Ninh Kiều","Cảng Hải Phòng","Bến Bình Đông"],0],
+["Ngày Nhà giáo Việt Nam là ngày nào?",["20/11","20/10","22/12","8/3"],0],
+["Ngày thành lập Quân đội nhân dân Việt Nam là ngày nào?",["22/12/1944","19/12/1946","2/9/1945","30/4/1975"],0],
+["Ngày thành lập Đoàn Thanh niên Cộng sản Hồ Chí Minh là ngày nào?",["26/3/1931","15/5/1941","3/2/1930","19/5/1890"],0],
+["Ngày Quốc khánh nước Cộng hòa xã hội chủ nghĩa Việt Nam là ngày nào?",["2/9","30/4","1/5","19/8"],0],
+["Ngày Quốc tế Thiếu nhi là ngày nào?",["1/6","15/5","20/11","1/5"],0],
+["Ngày Phụ nữ Việt Nam là ngày nào?",["20/10","8/3","1/6","20/11"],0],
+["Đảng Cộng sản Việt Nam được thành lập ngày nào?",["3/2/1930","2/9/1945","26/3/1931","19/5/1890"],0],
+["Thủ đô của nước Việt Nam là thành phố nào?",["Hà Nội","Huế","Đà Nẵng","Thành phố Hồ Chí Minh"],0],
+["Quốc kỳ Việt Nam có hình gì?",["Nền đỏ, ngôi sao vàng năm cánh","Nền vàng, ngôi sao đỏ","Nền xanh, ngôi sao vàng","Nền đỏ, hai ngôi sao vàng"],0],
+["Quốc ca Việt Nam là bài hát nào?",["Tiến quân ca","Cùng nhau ta đi lên","Như có Bác trong ngày vui đại thắng","Lên đàng"],0],
+["Ngọn núi cao nhất Việt Nam là núi nào?",["Phan-xi-păng","Bà Đen","Ba Vì","Ngọc Linh"],0],
+["Khi đèn giao thông màu đỏ, người đi đường phải làm gì?",["Dừng lại","Đi nhanh qua","Đi chậm lại","Rẽ phải"],0],
+["Khi đi bộ trên đường phố, em cần đi ở đâu?",["Trên vỉa hè","Giữa lòng đường","Sát dải phân cách","Bất cứ đâu"],0],
+["Khi ngồi sau xe máy, em phải làm gì?",["Đội mũ bảo hiểm, cài quai đúng cách","Đứng lên yên xe","Bỏ hai tay ra","Không cần đội mũ"],0],
+["Số điện thoại gọi cứu hỏa là số nào?",["114","113","115","111"],0],
+["Số điện thoại gọi cấp cứu y tế là số nào?",["115","114","113","111"],0],
+["Tổng đài quốc gia bảo vệ trẻ em là số nào?",["111","113","114","115"],0],
+["Phong trào thu gom giấy vụn của Đội có tên là gì?",["Kế hoạch nhỏ","Áo ấm mùa đông","Nuôi heo đất","Đôi bạn cùng tiến"],0],
+["Bài thơ “Lượm” là của nhà thơ nào?",["Tố Hữu","Xuân Quỳnh","Trần Đăng Khoa","Võ Quảng"],0],
+["Vịnh Hạ Long thuộc tỉnh nào?",["Quảng Ninh","Hải Phòng","Thanh Hóa","Ninh Bình"],0],
+["Ngày Môi trường thế giới là ngày nào?",["5/6","1/6","22/4","20/11"],0],
+["Một tuần lễ có mấy ngày?",["7 ngày","5 ngày","6 ngày","10 ngày"],0]
+].map(([q,o,a])=>({q,o,a}));
+const DEF={school:"",tpt:"",base:100,key:"",cls:CLS0,crit:CRIT0,entries:[],qb:null,sentIds:[],dev:Math.random().toString(36).slice(2,7)};
+let S=loadStore(KEY,DEF);const save=()=>saveStore(KEY,S);
+if(location.hash.startsWith("#ai=")){S.key=decodeURIComponent(location.hash.slice(4));save();history.replaceState(null,"",location.pathname)}
+const khois=()=>S.cls.split(/\n/).map(l=>l.split(/[,;]/).map(x=>x.trim()).filter(Boolean)).filter(a=>a.length);
+const allCls=()=>khois().flat();
+const crits=()=>S.crit.split(/\n/).map(l=>l.split("|").map(x=>x.trim())).filter(a=>a[0]&&a[1]&&!isNaN(+a[1])).map(([n,p])=>({n,p:+p}));
+const qbank=()=>S.qb||QB0;
+const ptOf=e=>{const c=crits().find(c=>c.n===e.c);return(c?c.p:e.p||0)*e.n};
+const uid=()=>S.dev+"-"+Date.now().toString(36)+rnd(1e4).toString(36);
+/* tuần: thứ Hai đến Chủ nhật */
+function monday(iso){const d=new Date(iso+"T00:00:00");const w=(d.getDay()+6)%7;d.setDate(d.getDate()-w);return d}
+const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+function weekRange(off){const m=monday(todayISO());m.setDate(m.getDate()+off*7);const e=new Date(m);e.setDate(e.getDate()+6);return[iso(m),iso(e)]}
+function score(from,to){const base=S.base;const out={};allCls().forEach(c=>out[c]={c,minus:0,plus:0,errs:{},n:0});
+  S.entries.filter(e=>e.d>=from&&e.d<=to&&out[e.cl]).forEach(e=>{const p=ptOf(e);const o=out[e.cl];if(p<0){o.minus+=-p;o.errs[e.c]=(o.errs[e.c]||0)+e.n}else o.plus+=p;o.n++});
+  const weeks=Math.max(1,Math.round((new Date(to)-new Date(from))/864e5/7));
+  Object.values(out).forEach(o=>{o.score=base*weeks-o.minus+o.plus;o.top=Object.entries(o.errs).sort((a,b)=>b[1]-a[1]).slice(0,2).map(([k,v])=>k.toLowerCase()+(v>1?" ("+v+")":""))});
+  return out}
+const khoiOf=c=>khois().findIndex(k=>k.includes(c));
+
+/* ===== TỔNG QUAN ===== */
+function renderTong(){const[a,b]=weekRange(0);const sc=score(a,b);const es=S.entries.filter(e=>e.d>=a&&e.d<=b);
+  const scored=new Set(es.map(e=>e.cl));
+  $("#kpis").innerHTML=`<div class="kpi"><b>${allCls().length}</b><span>lớp trong liên đội</span></div><div class="kpi"><b>${scored.size}</b><span>lớp đã được chấm tuần này</span></div><div class="kpi"><b>${es.filter(e=>ptOf(e)<0).reduce((s,e)=>s+e.n,0)}</b><span>lượt lỗi ghi nhận</span></div><div class="kpi" style="border-left-color:var(--ok)"><b>${es.filter(e=>ptOf(e)>0).reduce((s,e)=>s+e.n,0)}</b><span>lượt việc tốt, điểm cộng</span></div>`;
+  $("#leaders").innerHTML=khois().map((k,i)=>{const r=k.map(c=>sc[c]).sort((x,y)=>y.score-x.score)[0];return`<div class="log" style="grid-template-columns:80px 1fr auto"><span class="os">KHỐI ${esc(String(k[0]).match(/^\d+/)||i+1)}</span><b>🏆 ${esc(r.c)}</b><span class="os" style="font-size:20px">${r.score}</span></div>`}).join("");
+  const agg={};es.filter(e=>ptOf(e)<0).forEach(e=>agg[e.c]=(agg[e.c]||0)+e.n);const top=Object.entries(agg).sort((x,y)=>y[1]-x[1]).slice(0,6);const mx=top.length?top[0][1]:1;
+  $("#topErr").innerHTML=top.length?top.map(([k,v])=>`<div style="margin:8px 0"><div class="row" style="justify-content:space-between"><span>${esc(k)}</span><b>${v}</b></div><div style="height:8px;background:#F3F4F6;border-radius:9px"><div style="height:8px;width:${v/mx*100}%;background:var(--red);border-radius:9px"></div></div></div>`).join(""):'<span class="muted">Chưa có lỗi nào được ghi tuần này.</span>';
+  const m=String(new Date().getMonth()+1);const M=MONTHS.find(x=>x[0]===m);
+  $("#monthNow").innerHTML=M?`<div class="month now"><div class="m">Tháng ${M[0]}</div><div><div class="t">${M[1]}</div><div class="muted small">${M[2]}</div><div class="row" style="margin-top:8px"><button class="btn pri" onclick="goAI('kb','${M[1]}')">✨ Soạn kịch bản chào cờ</button><button class="btn" onclick="goAI('kh','${M[2].split(';')[0]}')">✨ Kế hoạch ngày lễ</button></div></div></div>`:'<span class="muted">Tháng hè – không có chủ điểm.</span>'}
+
+/* ===== CHẤM ===== */
+let CUR=null;
+function renderCham(){if(!$("#cDate").value)$("#cDate").value=todayISO();const d=$("#cDate").value;
+  const cnt={};S.entries.filter(e=>e.d===d).forEach(e=>cnt[e.cl]=(cnt[e.cl]||0)+1);
+  $("#clsPick").innerHTML=khois().map((k,i)=>`<div class="khoi"><div class="kt">Khối ${esc(String(k[0]).match(/^\d+/)||i+1)}</div><div class="cls">${k.map(c=>`<button class="cb ${c===CUR?"on":""}" data-c="${esc(c)}">${esc(c)}${cnt[c]?`<span class="n">${cnt[c]}</span>`:""}</button>`).join("")}</div></div>`).join("");
+  $$("#clsPick .cb").forEach(b=>b.onclick=()=>{CUR=b.dataset.c;renderCham()});
+  $("#curCls").textContent=CUR||"…";
+  const mine=S.entries.filter(e=>e.d===d&&e.cl===CUR);
+  $("#crits").innerHTML=CUR?crits().map((c,i)=>{const n=mine.filter(e=>e.c===c.n).reduce((s,e)=>s+e.n,0);return`<div class="crit"><div><div class="nm">${esc(c.n)}</div><div class="pt ${c.p<0?"m":"p"}">${c.p>0?"+":""}${c.p} điểm / lần</div></div><div class="step"><button data-i="${i}" data-d="-1">−</button><span class="v ${n?"has":""}">${n}</span><button data-i="${i}" data-d="1">+</button></div></div>`}).join(""):'<div class="hint">Chọn một lớp ở bên trái để bắt đầu chấm.</div>';
+  $$("#crits [data-d]").forEach(b=>b.onclick=()=>{const c=crits()[+b.dataset.i];const dlt=+b.dataset.d;
+    if(dlt>0)S.entries.push({id:uid(),d,cl:CUR,c:c.n,p:c.p,n:1,by:$("#cBy").value.trim(),note:$("#cNote").value.trim()});
+    else{const idx=S.entries.map((e,i)=>[e,i]).filter(([e])=>e.d===d&&e.cl===CUR&&e.c===c.n).map(x=>x[1]).pop();if(idx===undefined)return;S.entries.splice(idx,1)}
+    save();renderCham()});
+  const tot=mine.reduce((s,e)=>s+ptOf(e),0);$("#curScore").textContent=CUR?`Hôm nay: ${tot>0?"+":""}${tot} điểm`:"";
+  const day=S.entries.filter(e=>e.d===d).slice(-40).reverse();
+  $("#dayLog").innerHTML=day.length?day.map(e=>{const p=ptOf(e);return`<div class="log"><b>${esc(e.cl)}</b><span>${esc(e.c)}${e.by?` <span class="muted">· ${esc(e.by)}</span>`:""}</span><span class="p ${p<0?"m":"p"}">${p>0?"+":""}${p}</span><button class="btn ghost" data-x="${e.id}">✕</button></div>`}).join(""):'<span class="muted">Chưa có.</span>';
+  $$("#dayLog [data-x]").forEach(b=>b.onclick=()=>{S.entries=S.entries.filter(e=>e.id!==b.dataset.x);save();renderCham()})}
+$("#cDate").onchange=renderCham;
+$("#send").onclick=()=>{const sent=new Set(S.sentIds||[]);const list=S.entries.filter(e=>e.id.startsWith(S.dev)&&!sent.has(e.id));if(!list.length)return toast("Không có phiếu mới để gửi");
+  const code="LDS1:"+btoa(unescape(encodeURIComponent(JSON.stringify(list.map(e=>[e.id,e.d,e.cl,e.c,e.p,e.n,e.by])))));
+  copyText(code,"Đã sao chép mã phiếu ("+list.length+" dòng). Dán vào Zalo gửi Tổng phụ trách.");S.sentIds=[...sent,...list.map(e=>e.id)].slice(-3000);save()};
+$("#recvBtn").onclick=()=>{$("#recvBox").hidden=!$("#recvBox").hidden};
+$("#recvGo").onclick=()=>{const codes=$("#recvIn").value.match(/LDS1:[A-Za-z0-9+/=]+/g)||[];let add=0;const have=new Set(S.entries.map(e=>e.id));
+  codes.forEach(c=>{try{JSON.parse(decodeURIComponent(escape(atob(c.slice(5))))).forEach(([id,d,cl,cr,p,n,by])=>{if(!have.has(id)){S.entries.push({id,d,cl,c:cr,p,n,by});have.add(id);add++}})}catch(e){}});
+  save();$("#recvIn").value="";renderCham();toast(codes.length?`Đã gộp ${add} dòng từ ${codes.length} mã phiếu`:"Không thấy mã phiếu nào")};
+
+/* ===== XẾP HẠNG ===== */
+let WOFF=0,VIEW="khoi";
+$("#wPrev").onclick=()=>{WOFF--;renderHang()};$("#wNext").onclick=()=>{WOFF++;renderHang()};
+$$("#viewSeg button").forEach(b=>b.onclick=()=>{VIEW=b.dataset.v;$$("#viewSeg button").forEach(x=>x.classList.toggle("on",x===b));renderHang()});
+function weekNo(){/* tuần học tính từ thứ Hai đầu tháng 9 */const m=monday(weekRange(WOFF)[0]);const y=m.getMonth()>=8?m.getFullYear():m.getFullYear()-1;const s=monday(S.start||(y+"-09-07"));return Math.floor((m-s)/6048e5)+1}
+function range(){if(VIEW==="thang"){const m=monday(weekRange(WOFF)[0]);const a=new Date(m.getFullYear(),m.getMonth(),1),b=new Date(m.getFullYear(),m.getMonth()+1,0);return[iso(a),iso(b)]}return weekRange(WOFF)}
+function renderHang(){const[a,b]=range();const sc=score(a,b);
+  const label=VIEW==="thang"?`Tháng ${+a.slice(5,7)}/${a.slice(0,4)}`:`Tuần ${weekNo()} (${fmtDate(a).slice(0,5)} – ${fmtDate(b)})`;$("#wLabel").textContent=label;
+  const row=(o,i,n)=>`<tr class="${i===0?"top":i>=n-2&&o.minus>0?"low":""}"><td><span class="rk ${i<3?"g":""}">${i+1}</span></td><td><b>${esc(o.c)}</b>${o.top.length?`<div class="why">${esc(o.top.join(", "))}</div>`:""}</td><td class="sc">${o.score}</td><td style="color:var(--red)">${o.minus?"−"+o.minus:""}</td><td style="color:var(--ok)">${o.plus?"+"+o.plus:""}</td></tr>`;
+  const thead=`<tr><th>Hạng</th><th>Lớp</th><th>Điểm</th><th>Trừ</th><th>Cộng</th></tr>`;
+  let body;
+  if(VIEW==="truong"){const r=Object.values(sc).sort((x,y)=>y.score-x.score);body=`<table class="btab">${thead}${r.map((o,i)=>row(o,i,r.length)).join("")}</table>`}
+  else{const crow=(o,i,n)=>`<tr class="${i===0?"top":i>=n-2&&o.minus>0?"low":""}"><td style="width:40px"><span class="rk ${i<3?"g":""}">${i+1}</span></td><td><b>${esc(o.c)}</b>${o.top.length?`<div class="why" title="${esc(o.top.join(", "))}">${esc(o.top[0])}</div>`:""}</td><td class="sc" style="text-align:right;width:52px">${o.score}</td></tr>`;
+    body=`<div class="kgrid">${khois().map((k,i)=>{const r=k.map(c=>sc[c]).sort((x,y)=>y.score-x.score);return`<div class="kcol"><h4>Khối ${esc(String(k[0]).match(/^\d+/)||i+1)}</h4><table class="btab">${r.map((o,j)=>crow(o,j,r.length)).join("")}</table></div>`}).join("")}</div>`}
+  $("#board").innerHTML=`<div class="bh"><div class="badge" style="width:54px;height:54px">★</div><div><h2>Bảng thi đua ${VIEW==="thang"?"tháng":"tuần"}</h2><div class="s">${esc(S.school||"Liên đội")} · ${label}</div></div></div>${body}`;
+  $("#speech").textContent=speech(sc,label)}
+function speech(sc,label){const ks=khois();const lines=[];
+  lines.push(`Kính thưa các thầy cô giáo, thân mến các bạn đội viên và các em nhi đồng!`);
+  lines.push(`Sau đây, Liên đội xin thông báo kết quả thi đua ${label.toLowerCase()}.`);
+  const lead=[],weak=[];
+  ks.forEach((k,i)=>{const r=k.map(c=>sc[c]).sort((x,y)=>y.score-x.score);const kn=String(k[0]).match(/^\d+/)||i+1;
+    const best=r.filter(o=>o.score===r[0].score).map(o=>o.c);lead.push(`Khối ${kn}: lớp ${best.join(", ")} với ${r[0].score} điểm.`);
+    r.slice(-2).filter(o=>o.minus>0&&o.score<r[0].score).forEach(o=>weak.push(`lớp ${o.c}${o.top.length?" (do "+o.top.map(t=>t.replace(/ \(\d+\)/,"")).join(", ")+")":""}`))});
+  lines.push(`Các lớp dẫn đầu từng khối là:\n- `+lead.join("\n- "));
+  lines.push(`Liên đội tuyên dương các lớp trên. Chúng ta cùng dành cho các bạn một tràng pháo tay!`);
+  if(weak.length)lines.push(`Bên cạnh đó, các lớp cần cố gắng hơn trong tuần tới là: ${weak.join("; ")}.`);
+  const agg={};Object.values(sc).forEach(o=>Object.entries(o.errs).forEach(([k,v])=>agg[k]=(agg[k]||0)+v));const t=Object.entries(agg).sort((x,y)=>y[1]-x[1])[0];
+  if(t)lines.push(`Lỗi còn gặp nhiều nhất là: ${t[0].toLowerCase()}. Đề nghị các chi đội, sao nhi đồng nhắc nhở nhau khắc phục.`);
+  lines.push(`Chúc các bạn một tuần mới học tập tốt, rèn luyện tốt!`);return lines.join("\n\n")}
+$("#spCopy").onclick=()=>copyText($("#speech").textContent,"Đã sao chép lời đọc");
+$("#bImg").onclick=()=>saveImage($("#board"),"Bang-thi-dua-"+$("#wLabel").textContent.replace(/[^\dA-Za-zÀ-ỹ]+/g,"-"));
+$("#bXls").onclick=()=>{if(!window.XLSX)return toast("Đang tải công cụ Excel, thử lại sau");const[a,b]=range();const sc=score(a,b);
+  const rows=[["Khối","Lớp","Điểm","Điểm trừ","Điểm cộng","Lỗi chính","Hạng trong khối"]];
+  khois().forEach((k,i)=>{k.map(c=>sc[c]).sort((x,y)=>y.score-x.score).forEach((o,j)=>rows.push([String(k[0]).match(/^\d+/)?.[0]||i+1,o.c,o.score,o.minus,o.plus,o.top.join(", "),j+1]))});
+  const det=[["Ngày","Lớp","Nội dung","Số lần","Điểm","Người chấm"],...S.entries.filter(e=>e.d>=a&&e.d<=b).map(e=>[fmtDate(e.d),e.cl,e.c,e.n,ptOf(e),e.by||""])];
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),"Xep hang");XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(det),"Chi tiet");
+  XLSX.writeFile(wb,"Thi-dua-"+$("#wLabel").textContent.replace(/[^\dA-Za-zÀ-ỹ]+/g,"-")+".xlsx")};
+
+/* ===== CHÀO CỜ & AI ===== */
+const KINDS={kb:"kịch bản chi tiết cho buổi sinh hoạt dưới cờ (khoảng 30 phút) gồm: nghi lễ chào cờ, nhận xét thi đua, phần hoạt động theo chủ điểm có trò chơi hoặc tiểu phẩm ngắn, lời dẫn của người dẫn chương trình là đội viên lớp 5",
+ kh:"kế hoạch tổ chức gồm: mục đích – yêu cầu, thời gian – địa điểm, thành phần, nội dung các hoạt động cho từng khối, phân công nhiệm vụ, kinh phí dự kiến (để trống số tiền)",
+ tp:"bài phát thanh măng non dài khoảng 3 phút, giọng đọc của đội viên, có mở đầu, câu chuyện ngắn ý nghĩa và lời kêu gọi",
+ tb:"thông báo ngắn gọn gửi giáo viên chủ nhiệm qua Zalo, rõ việc cần làm, hạn hoàn thành"};
+function goAI(k,t){show("co");$("#aKind").value=k;$("#aTopic").value=t}
+$("#aGo").onclick=()=>{const k=$("#aKind").value,t=$("#aTopic").value.trim()||"Chủ điểm tháng";
+  const prompt=`Bạn là Tổng phụ trách Đội giàu kinh nghiệm ở một trường tiểu học Việt Nam${S.school?" ("+S.school+", "+allCls().length+" lớp)":""}. Hãy soạn ${KINDS[k]}.
+Chủ điểm / sự kiện: ${t}.
+${$("#aMore").value.trim()?"Yêu cầu thêm: "+$("#aMore").value.trim()+"\n":""}Viết tiếng Việt chuẩn mực, phù hợp học sinh tiểu học, đúng nghi thức Đội TNTP Hồ Chí Minh. Không bịa số liệu hay tên người cụ thể; chỗ cần điền thì để [ ]. Trình bày bằng văn bản thuần, các mục đánh số, không dùng ký hiệu markdown như ** hay #.`;
+  runAI({key:S.key,prompt,json:false,box:$("#aiBox"),onResult:r=>{$("#aOut").textContent=r.replace(/\*\*|^#+\s*/gm,"")}})};
+$("#aCopy").onclick=()=>copyText($("#aOut").textContent,"Đã sao chép bản nháp");
+function renderMonths(){const m=String(new Date().getMonth()+1);$("#months").innerHTML=MONTHS.map(M=>`<div class="month ${M[0]===m?"now":""}"><div class="m">Tháng ${M[0]}</div><div><div class="t">${M[1]}</div><div class="muted small">${M[2]}</div></div></div>`).join("")}
+
+/* ===== RUNG CHUÔNG VÀNG ===== */
+let RQ={i:0,order:[],tm:null};
+function rcvStart(){RQ.order=shuffle(qbank().map((_,i)=>i));RQ.i=0;rcvShow()}
+function rcvShow(reveal){clearInterval(RQ.tm);const qb=qbank();if(!RQ.order.length)RQ.order=shuffle(qb.map((_,i)=>i));const q=qb[RQ.order[RQ.i%RQ.order.length]];
+  if(!RQ.mix||RQ.mix.q!==q)RQ.mix={q,ord:shuffle([0,1,2,3])};const ord=RQ.mix.ord;
+  $("#rcv").innerHTML=`<div class="qn">🔔 Câu ${RQ.i+1}</div>${reveal?"":`<div class="clock" id="rcl">15</div>`}<div class="qt">${esc(q.q)}</div><div class="ops">${ord.map((k,j)=>`<div class="op ${reveal&&k===q.a?"right":""}"><b>${"ABCD"[j]}</b>${esc(q.o[k])}</div>`).join("")}</div>
+  <div class="ctl"><button class="btn" id="rFs">⛶ Toàn màn hình</button>${reveal?`<button class="btn pri big" id="rNext">Câu tiếp ▶</button>`:`<button class="btn pri big" id="rShow">Xem đáp án</button>`}</div>`;
+  $("#rFs").onclick=()=>{const r=$("#rcv");document.fullscreenElement?document.exitFullscreen():r.requestFullscreen&&r.requestFullscreen()};
+  if(reveal)$("#rNext").onclick=()=>{RQ.i++;RQ.mix=null;rcvShow()};
+  else{$("#rShow").onclick=()=>rcvShow(true);let t=15;RQ.tm=setInterval(()=>{t--;const c=$("#rcl");if(c)c.textContent=t;if(t<=0){clearInterval(RQ.tm);rcvShow(true)}},1000)}}
+function renderQ(){const qb=qbank();$("#qN").textContent=qb.length+" câu";
+  $("#qList").innerHTML=qb.map((q,i)=>`<div class="qi"><div>${i+1}. ${esc(q.q)}<div class="a">✔ ${esc(q.o[q.a])}</div></div><button class="btn ghost" data-del="${i}">✕</button></div>`).join("");
+  $$("#qList [data-del]").forEach(b=>b.onclick=()=>{S.qb=qbank().slice();S.qb.splice(+b.dataset.del,1);save();renderQ()})}
+let QNEW=[];
+$("#qGo").onclick=()=>{const t=$("#qTopic").value.trim()||"Đội Thiếu niên Tiền phong Hồ Chí Minh";
+  const prompt=`Hãy viết 5 câu hỏi trắc nghiệm cho trò chơi Rung chuông vàng dành cho học sinh tiểu học ${$("#qKhoi").value}, chủ đề: ${t}. Mỗi câu có 4 lựa chọn, chỉ 1 đáp án đúng, kiến thức chính xác, phù hợp lứa tuổi, câu ngắn gọn.
+Chỉ trả về JSON: {"cau":[{"hoi":"...","chon":["đáp án đúng","sai 1","sai 2","sai 3"]}]} (đáp án đúng luôn đặt ở vị trí đầu tiên).`;
+  runAI({key:S.key,prompt,json:true,box:$("#qBox"),onResult:r=>{QNEW=(r.cau||[]).filter(c=>c.hoi&&c.chon&&c.chon.length===4).map(c=>({q:c.hoi,o:c.chon.map(String),a:0}));
+    $("#qNew").innerHTML=QNEW.map((q,i)=>`<div class="qi"><div>${esc(q.q)}<div class="a">✔ ${esc(q.o[0])}</div><div class="small muted">Sai: ${q.o.slice(1).map(esc).join(" · ")}</div></div><button class="btn" data-add="${i}">➕ Thêm</button></div>`).join("")||'<span class="muted">AI chưa trả về câu hỏi.</span>';
+    $$("#qNew [data-add]").forEach(b=>b.onclick=()=>{S.qb=[...qbank(),QNEW[+b.dataset.add]];save();renderQ();b.disabled=true;b.textContent="Đã thêm"})}})};
+
+/* ===== CÀI ĐẶT ===== */
+function renderSet(){$("#sSchool").value=S.school;$("#sTPT").value=S.tpt;$("#sBase").value=S.base;$("#sStart").value=S.start||"";$("#sCls").value=S.cls;$("#nCls").textContent=allCls().length;$("#sCrit").value=S.crit;$("#sKey").value=S.key}
+function headLine(){$("#schoolLine").textContent=[S.school,S.tpt&&("TPT: "+S.tpt)].filter(Boolean).join(" · ")||"Trợ lý của Tổng phụ trách Đội"}
+$("#sSave").onclick=()=>{S.school=$("#sSchool").value.trim();S.tpt=$("#sTPT").value.trim();S.base=+$("#sBase").value||100;S.start=$("#sStart").value;save();headLine();toast("Đã lưu")};
+$("#sClsSave").onclick=()=>{S.cls=$("#sCls").value.trim()||CLS0;save();renderSet();toast("Đã lưu "+allCls().length+" lớp")};
+$("#sCritSave").onclick=()=>{S.crit=$("#sCrit").value.trim()||CRIT0;save();toast("Đã lưu "+crits().length+" tiêu chí")};
+$("#kSave").onclick=()=>{S.key=$("#sKey").value.trim();save();toast("Đã lưu mã")};
+$("#kTest").onclick=async()=>{S.key=$("#sKey").value.trim();save();try{await gemini(S.key,"Trả lời đúng một từ: OK");toast("Mã AI dùng được ✔")}catch(e){alert(e.message)}};
+$("#bk").onclick=()=>backup(KEY,S,"Lien-doi-so");
+$("#rs").onchange=e=>{const f=e.target.files[0];if(f)restore(f,v=>{S=Object.assign(structuredClone(DEF),v);save();headLine();show("tong");toast("Đã khôi phục")});e.target.value=""};
+$("#wipe").onclick=()=>{if(confirm("Xóa toàn bộ dữ liệu chấm thi đua trên máy này?")){S.entries=[];S.sentIds=[];save();toast("Đã xóa")}};
+
+function show(t){$$(".mi").forEach(b=>b.classList.toggle("on",b.dataset.t===t));$$(".pane").forEach(p=>p.classList.toggle("on",p.id==="p-"+t));
+  if(document.fullscreenElement)document.exitFullscreen();clearInterval(RQ.tm);
+  ({tong:renderTong,cham:renderCham,hang:renderHang,co:renderMonths,rcv:()=>{rcvStart();renderQ()},cai:renderSet})[t]();window.scrollTo(0,0)}
+$$(".mi").forEach(b=>b.onclick=()=>show(b.dataset.t));
+headLine();renderTong();
+</script>
+</body>
+</html>
